@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
-import { Button, Input, Label } from 'components/Elements';
-import { ErrorText } from 'components/Elements/ErrorText';
+import { Button, Input, Label, ErrorText } from 'components/Elements';
+import { useAddContactMutation } from 'api';
+import { Contact } from 'types/types';
+import { nanoid } from 'nanoid';
 
 const MyForm = styled.form`
   display: flex;
@@ -16,21 +18,55 @@ const MyForm = styled.form`
 `;
 
 export const Form = () => {
+  const [addContact, { isLoading, isError }] = useAddContactMutation();
+
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
+
+  const clearInput = () => {
+    setName('');
+    setNumber('');
+  };
+
+  const handleChangeTitle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setName(event.target.value);
+  };
+
+  const handleChangeNumber = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNumber(event.target.value);
+  };
+
+  const handleSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const newContact: Contact = {
+      id: nanoid(),
+      name: name,
+      number: number,
+    };
+
+    await addContact(newContact);
+
+    if (!isError) {
+      clearInput();
+    }
+  };
+
   return (
-    <MyForm>
+    <MyForm onSubmit={handleSubmitForm}>
       <Label>
         Name:
-        <Input />
+        <Input value={name} onChange={handleChangeTitle} />
       </Label>
 
       <Label>
         Number:
-        <Input />
+        <Input value={number} onChange={handleChangeNumber} />
       </Label>
 
-      <Button>create</Button>
+      <Button isLoading={isLoading}>create</Button>
 
-      <ErrorText>Какой контакт уже есть!</ErrorText>
+      {isError && <ErrorText>Ошибка при добавление!</ErrorText>}
     </MyForm>
   );
 };
